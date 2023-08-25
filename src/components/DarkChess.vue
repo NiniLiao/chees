@@ -1,0 +1,49 @@
+<template>
+  <li
+    :class="['box', isActive ? 'bg-yellow-200' : '']"
+    @click="handleClick"
+  >
+    <span v-if="data.id">
+      <span
+        :class="['chess', isRed ? 'text-red-700 border-red-700' : '']"
+        v-if="data.isOpen"
+      >
+        {{ getChessLabel(data.type) }}
+      </span>
+      <span class="chess back" v-else></span>
+    </span>
+  </li>
+</template>
+
+<script lang="ts">
+import { Vue, Component, Prop } from 'vue-property-decorator';
+import { CHESS_LIST } from '../utils';
+import { ChessItem } from '../utils/chess';
+
+@Component
+export default class Chess extends Vue {
+  @Prop(Object) data!: { id: string; type: string; isOpen: boolean };
+  @Prop(Number) index!: number;
+  @Prop(Function) clickChess!: (data: { id: string; type: string; isOpen: boolean }) => void;
+  @Prop(Boolean) isActive!: boolean;
+
+  get isRed(): boolean {
+    return this.data.type.substring(0, 1) === 'R';
+  }
+
+  getChessLabel(type: string): string {
+    console.log("取得階級", CHESS_LIST[type]);
+    return CHESS_LIST[type] || '';
+  }
+
+  handleClick(): void {
+    const sendData: ChessItem = {
+      id: this.data.id,
+      type: this.data.type,
+      isOpen: this.data.isOpen,
+      index: this.index,
+    };
+    this.$emit('pressClick', sendData);
+  }
+}
+</script>
