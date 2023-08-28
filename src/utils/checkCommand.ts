@@ -37,6 +37,12 @@ export const transIndex = (x: number, y: number): number => {
   return x * ROW + y;
 };
 
+export const checkSelf = (turn: number, player1: string | null, player2: string | null, type: string): boolean => {
+  const nowColor = turn === 1 ? player1 : player2;
+  const chessType = getColor(type);
+  return nowColor === chessType;
+};
+
 export const checkCanMove = (isBomb: boolean, selfIndex: number, targetIndex: number, chess:ChessItem[]) : boolean => {
   const [x, y] = transXY(selfIndex);
 
@@ -78,5 +84,36 @@ export const checkCanEat = (self: string, target: string): boolean => {
   return selfLevel > targetLevel;
 };
 
+export function canEatOrFlip(chess: ChessItem[]): boolean {
+  for (const chessItem of chess) {
+    if (!chessItem.isOpen || checkCanEatOrFlip(chessItem, chess)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function checkCanEatOrFlip(chessItem: ChessItem, chess: ChessItem[]): boolean {
+  if (!chessItem.isOpen) {
+    return true; 
+  }
+
+  for (const otherChessItem of chess) {
+    if (otherChessItem.id && otherChessItem.isOpen && checkCanEat(chessItem.type, otherChessItem.type)) {
+      return true; 
+    }
+  }
+
+  return false;
+}
+
+export function areAllChessOpened(chess: ChessItem[]): boolean {
+  for (const chessItem of chess) {
+    if (!chessItem.isOpen) {
+      return false;
+    }
+  }
+  return true;
+}
 
 
