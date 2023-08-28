@@ -39,6 +39,8 @@ import { Vue, Component, Watch } from 'vue-property-decorator';
 import {
   checkCanMove,
   checkCanEat,
+  moveChess,
+  eatChess,
   ROW, COL, combineChess, getColor, getLevel, ChessItem
 } from "./utils";
 import Chess from './components/DarkChess.vue';
@@ -68,10 +70,9 @@ export default class App extends Vue {
 
   created() {
     this.init();
-    console.log("start");
-    if (this.countState && !this.areAllChessOpened()) {
-    console.log("所有棋子已經翻開！");
-  }
+    if (this.countState && !this.areAllChessOpened()) { 
+      // 不需要回傳
+    }
   }
 
   @Watch('chess')
@@ -132,7 +133,6 @@ export default class App extends Vue {
 
     if (this.active.id === id) {
       this.active = null;
-      
       return;
     }
     
@@ -153,16 +153,16 @@ export default class App extends Vue {
         this.stepCount++;
       }
 
-      let isCanMove = checkCanMove(isBomb, selfIndex, targetIndex, this.chess);
+      const isCanMove = checkCanMove(isBomb, selfIndex, targetIndex, this.chess);
       if (!isCanMove) return;
       
       if (!id) {
-        this.moveChess(selfIndex, targetIndex);
+        this.chess = moveChess(this.chess, selfIndex, targetIndex, this.countState);
       } else {
-        if (checkCanEat(this.active.type, type)) {
-          this.moveChess(selfIndex, targetIndex);
-          this.eatChess(type);
-        }
+          if (checkCanEat(this.active.type, type)) {
+            this.chess = moveChess(this.chess, selfIndex, targetIndex, this.countState);
+            this.count = eatChess(this.count, type);
+          }
       }
     
       this.turn *= -1; 
@@ -180,13 +180,6 @@ export default class App extends Vue {
     return this.chess.findIndex(vo => vo.id === id);
   }
 
-  moveChess(selfIndex: number, targetIndex: number) {
-    const temp = [...this.chess];
-    temp[targetIndex] = temp[selfIndex];
-    temp[selfIndex] = { id: "", type: "", isOpen: true, index: selfIndex, count: 0, countState: this.countState};
-    this.chess = temp; 
-  }
-
   showChess(index: number) {
     let copy = [...this.chess];
     copy[index] = { ...copy[index], isOpen: true };
@@ -202,16 +195,6 @@ export default class App extends Vue {
     } else {
       this.player1 = 'R';
       this.player2 = 'B';
-    }
-  }
-
-  eatChess(type: string) {
-    const color = getColor(type);
-    if (color === "B") {
-      this.count.B++;
-    }
-    if (color === "R") {
-      this.count.R++;
     }
   }
 
