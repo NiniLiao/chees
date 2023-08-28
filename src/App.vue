@@ -82,14 +82,11 @@ export default class App extends Vue {
 
   @Watch('count', { deep: true })
   onCountChange(count: Record<string, number>) {
-    console.log("計數",count);
     if (count.B >= 16) {
-      console.log("Red wins!");
       alert("紅方勝利");
       this.init();
     } 
     if (count.R >= 16) {
-      console.log("Black wins!");
       alert("黑方勝利");
       this.init();
     } 
@@ -143,7 +140,6 @@ export default class App extends Vue {
       const isBomb = getLevel(this.active.type) === 2;
 
       if (this.stepCount >= 50 && !this.canEatOrFlip()) {
-        console.log("It's a draw!");
         alert("和局囉");
         this.init();
       }
