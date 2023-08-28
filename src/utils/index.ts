@@ -1,4 +1,4 @@
-export * from './generalCommand';
+export * from './checkCommand';
 export * from './coordinate';
 export * from './init';
 export * from './moveCommand';

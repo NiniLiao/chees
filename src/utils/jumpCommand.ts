@@ -1,4 +1,4 @@
-import { ChessItem, transXY, transIndex } from "./generalCommand";
+import { ChessItem, transXY, transIndex } from "./checkCommand";
 
 export const checkJumpStep = (selfIndex: number, targetIndex: number, panel: ChessItem[]): boolean => {
   const [x, y] = transXY(selfIndex);

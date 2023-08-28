@@ -37,8 +37,12 @@
 <script lang="ts">
 import { Vue, Component, Watch } from 'vue-property-decorator';
 import {
+  checkSelf,
   checkCanMove,
   checkCanEat,
+  canEatOrFlip,
+  checkCanEatOrFlip,
+  areAllChessOpened,
   moveChess,
   eatChess,
   ROW, COL, combineChess, getColor, getLevel, ChessItem
@@ -59,18 +63,19 @@ export default class App extends Vue {
   player1: string | null = null;
   player2: string | null = null;
   chess: ChessItem[] = [];
+  chosenChess: ChessItem | null = null;
 
   ROW: number = ROW;
   COL: number = COL;
 
-  stepCount = 0;  // 步數計數器
+  stepCount = 0; 
   countState = false;
 
   classnames = classnames;
 
   created() {
     this.init();
-    if (this.countState && !this.areAllChessOpened()) { 
+    if (this.countState && !areAllChessOpened(this.chess)) { 
       // 不需要回傳
     }
   }
@@ -99,88 +104,70 @@ export default class App extends Vue {
     this.countState = false;
   }
 
-  areAllChessOpened(): boolean {
-    for (const chessItem of this.chess) {
-      if (!chessItem.isOpen) {
-        return false;
-      }
-    }
-    return true;
-  }
+  clickChess(chessItem: ChessItem) {
+    this.chosenChess = chessItem;
 
-  clickChess({ id, type, isOpen, index }: ChessItem) {
-    if (this.player1 === null) {
-      this.decidePlayer(type);
-    }
+    this.togglePlayer(this.chosenChess.type);
 
-    if (!isOpen) {
-      if (!this.active) {
-        this.showChess(index);
-      }
+    if (!this.chosenChess.isOpen) {
+      this.displayChess(this.chosenChess.index);
       return;
-    }
+    }  
 
-    const isSelf = this.checkSelf(type);
-
+    const isSelf = checkSelf(this.turn, this.player1, this.player2, this.chosenChess.type);
+    
     if (!this.active) {
       if (!isSelf) return;
-      this.active = { id, type, isOpen, index, count: 0, countState: this.countState};
+      this.active = { ...this.chosenChess, count: 0, countState: this.countState };
       return;
     }
 
-    if (this.active.id === id) {
+    if (this.active.id === this.chosenChess.id) {
       this.active = null;
       return;
     }
     
-    if (this.active.id !== id) {
+    if (this.active.id !== this.chosenChess.id) {
       if (isSelf) return;
       const selfIndex = this.active.index;
-      const targetIndex = index;
+      const targetIndex = this.chosenChess.index;
       const isBomb = getLevel(this.active.type) === 2;
 
-      if (this.stepCount >= 50 && !this.canEatOrFlip()) {
+      if (this.stepCount >= 50 && !canEatOrFlip(this.chess)) {
         alert("和局囉");
         this.init();
       }
 
-      if (!this.canEatOrFlip() && !this.areAllChessOpened()) {
+      if (!canEatOrFlip(this.chess) && !areAllChessOpened(this.chess)) {
         this.countState = true;
         this.stepCount++;
       }
 
-      const isCanMove = checkCanMove(isBomb, selfIndex, targetIndex, this.chess);
-      if (!isCanMove) return;
-      
-      if (!id) {
-        this.chess = moveChess(this.chess, selfIndex, targetIndex, this.countState);
-      } else {
-          if (checkCanEat(this.active.type, type)) {
+        const isCanMove = checkCanMove(isBomb, selfIndex, targetIndex, this.chess);
+        if (!isCanMove) return;
+        
+        if (!this.chosenChess.id) {
+          this.chess = moveChess(this.chess, selfIndex, targetIndex, this.countState);
+        } else {
+          if (checkCanEat(this.active.type, this.chosenChess.type)) {
             this.chess = moveChess(this.chess, selfIndex, targetIndex, this.countState);
-            this.count = eatChess(this.count, type);
+            this.count = eatChess(this.count, this.chosenChess.type);
           }
+        }
+      
+        this.turn *= -1; 
+        this.active = null;
       }
-    
-      this.turn *= -1; 
-      this.active = null;
-    }
   }
 
-  checkSelf(type: string) {
-    let nowColor = this.turn === 1 ? this.player1 : this.player2;
-    const chessType = getColor(type);
-    return nowColor === chessType;
+  transPlayer(type: string) {
+    if (!type) return '';
+    return type === "B" ? '黑方' : '紅方';
   }
 
-  findChessIndex(id: string) {
-    return this.chess.findIndex(vo => vo.id === id);
-  }
-
-  showChess(index: number) {
-    let copy = [...this.chess];
-    copy[index] = { ...copy[index], isOpen: true };
-    this.chess = copy; 
-    this.turn *= -1; 
+  transColor(type: string) {
+    if (!type) return '';
+    return type === "B" ? 'bg-black' : 'bg-red-600';
   }
 
   decidePlayer(type: string) {
@@ -194,37 +181,23 @@ export default class App extends Vue {
     }
   }
 
-  canEatOrFlip(): boolean {
-    for (const chessItem of this.chess) {
-      if (!chessItem.isOpen || this.checkCanEatOrFlip(chessItem)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
- checkCanEatOrFlip({ type, isOpen }: ChessItem): boolean {
-  if (!isOpen) {
-    return true; 
-  }
-
-  for (const chessItem of this.chess) {
-    if (chessItem.id && chessItem.isOpen && checkCanEat(type, chessItem.type)) {
-      return true; 
+  togglePlayer(chessType: string) {
+    if (this.player1 === null) {
+      this.decidePlayer(chessType);
     }
   }
-
-  return false;
-}
-
-  transPlayer(type: string) {
-    if (!type) return '';
-    return type === "B" ? '黑方' : '紅方';
+  
+  showChess(index: number) {
+    let copy = [...this.chess];
+    copy[index] = { ...copy[index], isOpen: true };
+    this.chess = copy; 
+    this.turn *= -1; 
   }
 
-  transColor(type: string) {
-    if (!type) return '';
-    return type === "B" ? 'bg-black' : 'bg-red-600';
+  displayChess(chessIndex: number) {
+    if (!this.active) {
+      this.showChess(chessIndex);
+    }
   }
 }
 </script>

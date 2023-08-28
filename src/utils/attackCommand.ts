@@ -1,4 +1,4 @@
-import { getColor } from './generalCommand';
+import { getColor } from './checkCommand';
 
 export const eatChess = (count: Record<string, number>, type: string): Record<string, number> => {
     const color = getColor(type);

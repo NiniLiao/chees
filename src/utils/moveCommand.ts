@@ -1,4 +1,4 @@
-import { ChessItem } from './generalCommand';
+import { ChessItem } from './checkCommand';
 
 export const moveChess = (chess: ChessItem[], selfIndex: number, targetIndex: number, countState: boolean): ChessItem[] => {
   const temp = [...chess];
