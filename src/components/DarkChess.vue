@@ -18,7 +18,9 @@
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator';
 import { CHESS_LIST } from '../utils';
-import { ChessItem } from '../utils/chess';
+import { ChessItem } from '../utils/generalCommand';
+
+
 
 @Component
 export default class Chess extends Vue {
