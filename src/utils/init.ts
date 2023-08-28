@@ -11,6 +11,7 @@ const basicSetting = (): ChessItem[] => {
   const arr: ChessItem[] = Object.keys(CHESS_LIST).map((vo) => {
     return { id: uuidv4(), type: vo, isOpen: false };
   });
+  
   return arr;
 };
 
