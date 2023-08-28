@@ -25,6 +25,8 @@
             :isActive="active?.id === chess[i * ROW + j].id"
             :index="i * ROW + j"
             :data="chess[i * ROW + j]"
+            :countData="count"
+            :countState ="countState"
           />
         </ul>
       </ul>
@@ -35,8 +37,7 @@
 <script lang="ts">
 import { Vue, Component, Watch } from 'vue-property-decorator';
 import {
-  checkStep,
-  checkBombStep,
+  checkCanMove,
   checkCanEat,
   ROW, COL, combineChess, getColor, getLevel, ChessItem
 } from "./utils";
@@ -60,11 +61,17 @@ export default class App extends Vue {
   ROW: number = ROW;
   COL: number = COL;
 
+  stepCount = 0;  // 步數計數器
+  countState = false;
+
   classnames = classnames;
 
   created() {
     this.init();
     console.log("start");
+    if (this.countState && !this.areAllChessOpened()) {
+    console.log("所有棋子已經翻開！");
+  }
   }
 
   @Watch('chess')
@@ -72,28 +79,35 @@ export default class App extends Vue {
     console.warn("chess", chess);
   }
 
-  @Watch('count')
+  @Watch('count', { deep: true })
   onCountChange(count: Record<string, number>) {
-    console.log("Count",count);
+    console.log("計數",count);
     if (count.B >= 16) {
-    console.log("Red wins!");
-    alert("紅方勝利");
-    this.init();
-  } else if (count.R >= 16) {
-    console.log("Black wins!");
-    alert("黑方勝利");
-    this.init();
-  } else {
-    console.log("It's a draw!");
-    //alert("和局囉");
-    this.init();
-  }
+      console.log("Red wins!");
+      alert("紅方勝利");
+      this.init();
+    } 
+    if (count.R >= 16) {
+      console.log("Black wins!");
+      alert("黑方勝利");
+      this.init();
+    } 
 }
   
   init() {
     this.chess = combineChess() as ChessItem[];
     this.count = { B: 0, R: 0 };
     this.turn = 1;
+    this.countState = false;
+  }
+
+  areAllChessOpened(): boolean {
+    for (const chessItem of this.chess) {
+      if (!chessItem.isOpen) {
+        return false;
+      }
+    }
+    return true;
   }
 
   clickChess({ id, type, isOpen, index }: ChessItem) {
@@ -112,53 +126,45 @@ export default class App extends Vue {
 
     if (!this.active) {
       if (!isSelf) return;
-      this.active = { id, type, isOpen, index };
+      this.active = { id, type, isOpen, index, count: 0, countState: this.countState};
       return;
     }
 
     if (this.active.id === id) {
       this.active = null;
+      
       return;
     }
-
+    
     if (this.active.id !== id) {
       if (isSelf) return;
       const selfIndex = this.active.index;
       const targetIndex = index;
       const isBomb = getLevel(this.active.type) === 2;
 
-      let isCanMove = isBomb ? checkBombStep(selfIndex, targetIndex, this.chess.map(item => !!item.id)) : checkStep(selfIndex, targetIndex);
-      console.log("是炮嗎?", isBomb);
-      console.log("可以動嗎?", isCanMove); 
-      if (!isBomb && isCanMove) {console.log("其他的棋子");}
-      if (!isCanMove) {
-        if (isBomb) {this.moveChess(selfIndex, targetIndex); console.log("動資", id);}
-        return;
-      } 
-      if (isBomb && isCanMove) {
-            if (!id) {
-            this.moveChess(selfIndex, targetIndex);
-            return;
-          } else {
-            if (checkCanEat(this.active.type, type)) {
-              console.log("是炮又可以動");
-              this.moveChess(selfIndex, targetIndex);
-              this.eatChess(type);
-              return;
-            }
-          }
-        }   
-      
+      if (this.stepCount >= 50 && !this.canEatOrFlip()) {
+        console.log("It's a draw!");
+        alert("和局囉");
+        this.init();
+      }
+
+      if (!this.canEatOrFlip() && !this.areAllChessOpened()) {
+        this.countState = true;
+        this.stepCount++;
+      }
+
+      let isCanMove = checkCanMove(isBomb, selfIndex, targetIndex, this.chess);
+      if (!isCanMove) return;
       
       if (!id) {
         this.moveChess(selfIndex, targetIndex);
       } else {
         if (checkCanEat(this.active.type, type)) {
           this.moveChess(selfIndex, targetIndex);
-          console.log("有ID的");
           this.eatChess(type);
         }
       }
+    
       this.turn *= -1; 
       this.active = null;
     }
@@ -177,7 +183,7 @@ export default class App extends Vue {
   moveChess(selfIndex: number, targetIndex: number) {
     const temp = [...this.chess];
     temp[targetIndex] = temp[selfIndex];
-    temp[selfIndex] = { id: "", type: "", isOpen: true, index: selfIndex };
+    temp[selfIndex] = { id: "", type: "", isOpen: true, index: selfIndex, count: 0, countState: this.countState};
     this.chess = temp; 
   }
 
@@ -186,7 +192,6 @@ export default class App extends Vue {
     copy[index] = { ...copy[index], isOpen: true };
     this.chess = copy; 
     this.turn *= -1; 
-    console.log("順序", this.turn);
   }
 
   decidePlayer(type: string) {
@@ -209,6 +214,29 @@ export default class App extends Vue {
       this.count.R++;
     }
   }
+
+  canEatOrFlip(): boolean {
+    for (const chessItem of this.chess) {
+      if (!chessItem.isOpen || this.checkCanEatOrFlip(chessItem)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+ checkCanEatOrFlip({ type, isOpen }: ChessItem): boolean {
+  if (!isOpen) {
+    return true; 
+  }
+
+  for (const chessItem of this.chess) {
+    if (chessItem.id && chessItem.isOpen && checkCanEat(type, chessItem.type)) {
+      return true; 
+    }
+  }
+
+  return false;
+}
 
   transPlayer(type: string) {
     if (!type) return '';

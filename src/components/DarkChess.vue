@@ -8,7 +8,7 @@
         :class="['chess', isRed ? 'text-red-700 border-red-700' : '']"
         v-if="data.isOpen"
       >
-        {{ getChessLabel(data.type) }}
+        {{ getChessLabel(data?.type) }}
       </span>
       <span class="chess back" v-else></span>
     </span>
@@ -26,13 +26,14 @@ export default class Chess extends Vue {
   @Prop(Number) index!: number;
   @Prop(Function) clickChess!: (data: { id: string; type: string; isOpen: boolean }) => void;
   @Prop(Boolean) isActive!: boolean;
+  @Prop(Number) count!: number;
+  @Prop(Boolean) countState!: boolean;
 
   get isRed(): boolean {
     return this.data.type.substring(0, 1) === 'R';
   }
 
   getChessLabel(type: string): string {
-    console.log("取得階級", CHESS_LIST[type]);
     return CHESS_LIST[type] || '';
   }
 
@@ -42,6 +43,8 @@ export default class Chess extends Vue {
       type: this.data.type,
       isOpen: this.data.isOpen,
       index: this.index,
+      count: this.count,
+      countState: this.countState,
     };
     this.$emit('pressClick', sendData);
   }
