@@ -45,7 +45,7 @@ import {
   moveChess,
   eatChess,
   ROW, COL, combineChess, getColor, getLevel, ChessItem
-} from "./utils";
+} from "./model";
 import Chess from './components/DarkChess.vue';
 import './App.css';
 import classnames from 'classnames';
@@ -74,9 +74,6 @@ export default class App extends Vue {
 
   created() {
     this.init();
-    if (this.countState && !areAllChessOpened(this.chess)) { 
-      // 不需要回傳
-    }
   }
 
   @Watch('chess')
@@ -157,11 +154,10 @@ export default class App extends Vue {
         this.countState = true;
         this.stepCount++;
       }
-
       
         this.turn *= -1; 
         this.active = null;
-      }
+    }
   }
 
   transPlayer(type: string) {

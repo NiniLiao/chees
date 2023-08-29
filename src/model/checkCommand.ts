@@ -29,8 +29,6 @@ export const getLevel = (chess: string): number => {
   return Number(chess.substring(1, 2));
 };
 
-
-
 export const checkSelf = (turn: number, player1: string | null, player2: string | null, type: string): boolean => {
   const nowColor = turn === 1 ? player1 : player2;
   const chessType = getColor(type);
@@ -38,7 +36,6 @@ export const checkSelf = (turn: number, player1: string | null, player2: string 
 };
 
 export const checkCanMove = (isBomb: boolean, selfIndex: number, targetIndex: number, chess:ChessItem[]) : boolean => {
-  const [x, y] = transXY(selfIndex);
 
   if (isBomb) {
     return checkJumpStep(selfIndex, targetIndex, chess);

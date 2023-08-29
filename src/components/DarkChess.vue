@@ -17,8 +17,8 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator';
-import { CHESS_LIST } from '../utils';
-import { ChessItem } from '../utils/checkCommand';
+import { CHESS_LIST } from '../model';
+import { ChessItem } from '../model/checkCommand';
 
 
 
