@@ -16,3 +16,11 @@ export const CHESS_LIST: Record<string, string> = {
     B6: '士',
     B7: '將',
 };
+
+export const transXY = (index: number): [number, number] => {
+    return [Math.floor(index / 8), index % 8];
+};
+  
+export const transIndex = (x: number, y: number): number => {
+    return x * ROW + y;
+};

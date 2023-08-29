@@ -1,4 +1,5 @@
-import { ChessItem, transXY, transIndex } from "./checkCommand";
+import { ChessItem } from "./checkCommand";
+import { transXY, transIndex } from "./coordinate";
 
 export const checkJumpStep = (selfIndex: number, targetIndex: number, panel: ChessItem[]): boolean => {
   const [x, y] = transXY(selfIndex);

@@ -1,4 +1,4 @@
-import { ROW, COL } from "./coordinate";
+import { ROW, COL, transXY, transIndex } from "./coordinate";
 import { checkJumpStep } from "./jumpCommand";
 
 const normal: [number, number][] = [
@@ -29,13 +29,7 @@ export const getLevel = (chess: string): number => {
   return Number(chess.substring(1, 2));
 };
 
-export const transXY = (index: number): [number, number] => {
-  return [Math.floor(index / 8), index % 8];
-};
 
-export const transIndex = (x: number, y: number): number => {
-  return x * ROW + y;
-};
 
 export const checkSelf = (turn: number, player1: string | null, player2: string | null, type: string): boolean => {
   const nowColor = turn === 1 ? player1 : player2;

@@ -41,7 +41,6 @@ import {
   checkCanMove,
   checkCanEat,
   canEatOrFlip,
-  checkCanEatOrFlip,
   areAllChessOpened,
   moveChess,
   eatChess,
@@ -117,22 +116,38 @@ export default class App extends Vue {
     const isSelf = checkSelf(this.turn, this.player1, this.player2, this.chosenChess.type);
     
     if (!this.active) {
+      // 檢查是否為己方棋子
       if (!isSelf) return;
       this.active = { ...this.chosenChess, count: 0, countState: this.countState };
       return;
     }
 
+    // 點擊已選取的格子
     if (this.active.id === this.chosenChess.id) {
       this.active = null;
       return;
     }
     
+    // 是否選擇第二個棋子
     if (this.active.id !== this.chosenChess.id) {
       if (isSelf) return;
       const selfIndex = this.active.index;
       const targetIndex = this.chosenChess.index;
       const isBomb = getLevel(this.active.type) === 2;
 
+      const isCanMove = checkCanMove(isBomb, selfIndex, targetIndex, this.chess);
+      if (!isCanMove) return;
+      
+      if (!this.chosenChess.id) {
+        this.chess = moveChess(this.chess, selfIndex, targetIndex, this.countState);
+      } else {
+        if (checkCanEat(this.active.type, this.chosenChess.type)) {
+          this.chess = moveChess(this.chess, selfIndex, targetIndex, this.countState);
+          this.count = eatChess(this.count, this.chosenChess.type);
+        }
+      }
+
+        
       if (this.stepCount >= 50 && !canEatOrFlip(this.chess)) {
         alert("和局囉");
         this.init();
@@ -143,17 +158,6 @@ export default class App extends Vue {
         this.stepCount++;
       }
 
-        const isCanMove = checkCanMove(isBomb, selfIndex, targetIndex, this.chess);
-        if (!isCanMove) return;
-        
-        if (!this.chosenChess.id) {
-          this.chess = moveChess(this.chess, selfIndex, targetIndex, this.countState);
-        } else {
-          if (checkCanEat(this.active.type, this.chosenChess.type)) {
-            this.chess = moveChess(this.chess, selfIndex, targetIndex, this.countState);
-            this.count = eatChess(this.count, this.chosenChess.type);
-          }
-        }
       
         this.turn *= -1; 
         this.active = null;
