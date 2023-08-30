@@ -1,37 +1,25 @@
-export class ChessPiece {
+import ChessElement from './components/DarkChess.vue';
+
+
+export interface ChessItem {
     id: string;
     type: string;
     isOpen: boolean;
-    chosen: boolean | null = null;
-    turn: number;
-    hasMoved: boolean;
-    
-  
-    constructor(id: string, type: string, isOpen: boolean,) {
-      this.id = id;
-      this.type = type;
-      this.isOpen = isOpen;
-      this.chosen = false ; 
-      this.turn = 1; 
-      this.hasMoved = false; 
-    }
-  
-    checkMoved(): boolean {
-        return this.hasMoved;
-    }
-  
-    setMoved(moved: boolean): void {
-        this.hasMoved = moved;
-    }
-  
-    getColor(type: string): string {
-        return this.type.substring(0, 1);
-    }
+    index: number;
+    count: Record<string, number>;
+    countState: boolean;
+}
 
-    getLevel = (type: string): number => {
-        return Number(this.type.substring(1, 2));
+export class ChessPiece {
+    protected receiver: ChessElement;
+    public turn = 1;
+  
+    constructor(receiver: ChessElement) {
+      this.receiver = new ChessElement();
     }
-  }
+  
+    excute(chess:ChessItem[], selfIndex:number, targetIndex:number, countState:boolean): void {};
+}
 
   
   

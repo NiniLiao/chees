@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import { ChessPiece } from './chessPiece';
+import { ROW, COL } from './chessPieceConstant';
 import { Location } from './chessCoordinate';
 
 export class Board {
@@ -8,8 +9,8 @@ export class Board {
     private piece: ChessPiece | null = null;
   
     constructor(row: number, col: number) {
-      this.row = row;
-      this.col = col;
+      this.row = ROW;
+      this.col = COL;
     }
 
     setRow(row: number): void {
@@ -39,26 +40,18 @@ export class Board {
     getPiece(): ChessPiece | null {
         return this.piece;
     }
-
-    movePiece(Location: Location): void {
-        // 實作移動棋子的邏輯
-    }
-    
-    isOutside(Location: Location): boolean {
-        return false;
-    }
 }
   
 export default class ChessBoard extends Vue {
-squares: Board[] = [];
+    squares: Board[] = [];
 
-mounted() {
-    // 初始化棋盤格子和棋子
-    for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
-            const board = new Board(row, col);
-            this.squares.push(board);
+    mounted() {
+        // 初始化棋盤格子和棋子
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 4; col++) {
+                const board = new Board(row, col);
+                this.squares.push(board);
+            }
         }
     }
-}
 }

@@ -1,3 +1,5 @@
+export const ROW = 8;
+export const COL = 4;
 export const pieceConstant: Record<string, string> = {
     R1: '兵',
     R2: '炮',
