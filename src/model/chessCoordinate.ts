@@ -34,13 +34,13 @@ export class Location {
     
       getToY(): number {
         return this.toY;
-      }
+      }     
+}
 
-      transXY = (index: number): [number, number] => {
-        return [Math.floor(index / 8), index % 8];
-      }
+export const transXY = (index: number): [number, number] => {
+  return [Math.floor(index / 8), index % 8];
+}
 
-      transIndex = (x: number, y: number): number => {
-        return x * ROW + y;
-      }
+export const transIndex = (x: number, y: number): number => {
+  return x * ROW + y;
 }

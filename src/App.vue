@@ -21,7 +21,8 @@
       <ul v-for="(vo, i) in Array.from({ length: chess.length / ROW })" :key="'col' + i" class="border-r line" >
         <ul v-for="(item, j) in Array.from({ length: ROW })" :key="'row' + j" >
           <ChessElement
-            @pressClick="clickChess"
+             ref="chessElement"
+             @pressClick="() => clickChess(chess)"
             :isActive="active?.id === chess[i * ROW + j].id"
             :index="i * ROW + j"
             :data="chess[i * ROW + j]"
@@ -36,9 +37,11 @@
 
 <script lang="ts">
 import { Vue, Component, Watch } from 'vue-property-decorator';
-import * as AppLayout from './model/chessExport';
+import { ChessItem, getColor, combineChess, checkSelf, canEatOrFlip, areAllChessOpened } from './model/chessPiece';
+import { ROW, COL } from './model/chessPieceConstant';
+import { R1 } from './model/chessR1';
 import ChessElement from './components/DarkChess.vue';
-import './ChessInvoker.css';
+import './App.css';
 import classnames from 'classnames';
 
 @Component({
@@ -48,26 +51,30 @@ import classnames from 'classnames';
 })
 export default class App extends Vue {
   count = { B: 0, R: 0 } as Record<string, number>;
-  active: AppLayout.ChessItem | null = null;
+  active: ChessItem | null = null;
   turn = 1;
   player1: string | null = null;
   player2: string | null = null;
-  chess: AppLayout.ChessItem[] = [];
+  chess: ChessItem[] = [];
 
-  ROW: number = AppLayout.ROW;
-  COL: number = AppLayout.COL;
+  ROW: number = ROW;
+  COL: number = COL;
 
   stepCount = 0; 
   countState = false;
+
+  R1: R1;
 
   classnames = classnames;
 
   created() {
     this.init();
+    this.R1 = new R1(this.$refs.chessElement as ChessElement);
+    console.log('R1的實例化 : ' + this.R1)
   }
 
   @Watch('chess')
-  onChessChange(chess: AppLayout.ChessItem[]) {
+  onChessChange(chess: ChessItem[]) {
     console.warn("chess", chess);
   }
 
@@ -84,73 +91,87 @@ export default class App extends Vue {
 }
   
   init() {
-    this.chess = AppLayout.combineChess() as AppLayout.ChessItem[];
+    this.chess = combineChess() as ChessItem[];
     this.count = { B: 0, R: 0 };
     this.turn = 1;
     this.countState = false;
   }
 
-  clickChess(chessItem: AppLayout.ChessItem) {
-    const selfIndex = this.active ? this.active.index : -1;
-    const targetIndex = chessItem.index; 
-    const level = this.active ? this.active.type : '';
+  clickChess(chessItem: ChessItem[]) {
+    for (let i = 0; i < chessItem.length; i++){
+      const selfIndex = this.active ? this.active.index : -1;
+      const targetIndex = chessItem[i].index; 
+      console.log("看一下目標座標 : ", targetIndex);
+      const level = this.active ? this.active.type : '';
 
-    this.togglePlayer(chessItem.type);
+      this.togglePlayer(chessItem[i].type);
+      
+      if (!chessItem[i].isOpen) {
+        this.displayChess(chessItem[i].index); 
+        return;
+      }
 
-    if (!chessItem.isOpen) {
-      this.displayChess(chessItem.index); 
-      return;
+      const isSelf = checkSelf(this.turn, this.player1, this.player2, chessItem[i].type); 
+
+      if (!this.active) {
+        // 檢查是否為己方棋子
+        if (!isSelf) return;
+          this.active = { ...chessItem[i], count: { ...this.count }, countState: this.countState }; 
+          return;
+      }
+
+      // 點擊已選取的格子
+      if (this.active.id === chessItem[i].id) {
+        this.active = null;
+        return;
+      }
+
+      // 是否選擇第二個棋子
+      if (this.active.id !== chessItem[i].id) {
+        if (isSelf) return;
+
+        switch (level) {
+          case "R1": {
+            console.log('this' + this)
+            this.R1.excute(chessItem, selfIndex, targetIndex, this.countState); 
+            break;
+          }
+        }	
+      } 
+
+      if (!canEatOrFlip(this.chess) && !areAllChessOpened(this.chess)) {
+          this.countState = true;
+          this.stepCount++;
+      }
+      
+      if (this.stepCount >= 50 && !canEatOrFlip(this.chess)) {
+          alert("和局囉");
+          this.init();
+      }
     }
-
-    const isSelf = checkSelf(this.turn, this.player1, this.player2, chessItem.type); // 使用 chessItem 的 type
-
-    if (!this.active) {
-      // 檢查是否為己方棋子
-      if (!isSelf) return;
-      this.active = { ...chessItem, ...this.count, countState: this.countState }; // 使用 chessItem 屬性
-      return;
-    }
-
-    // 點擊已選取的格子
-    if (this.active.id === chessItem.id) {
-      this.active = null;
-      return;
-    }
-
-    // 是否選擇第二個棋子
-    if (this.active.id !== chessItem.id) {
-      if (isSelf) return;
-
-      switch (level) {
-        case "R1": {
-          AppLayout.R1.execute(chessItem, selfIndex, targetIndex, this.countState); // 假設要執行 R1 的方法是 execute，而不是 excute
-        }
-      }	
-    } 
-
-    if (!canEatOrFlip(this.chess) && !areAllChessOpened(this.chess)) {
-        this.countState = true;
-        this.stepCount++;
-    }
-    
-    if (this.stepCount >= 50 && !canEatOrFlip(this.chess)) {
-        alert("和局囉");
-        this.init();
-    }
-    
     this.turn *= -1; 
     this.active = null;  
   }
 
+  transPlayer = (type: string): string => {
+    if (!type) return '';
+    return type === "B" ? '黑方' : '紅方';
+  }
+
+  transColor = (type: string): string => {
+    if (!type) return '';
+    return type === "B" ? 'bg-black' : 'bg-red-600';
+  }
+
   decidePlayer(type: string) {
     const color = getColor(type);
-      if (color === "B") {
-        this.player1 = 'B';
-        this.player2 = 'R';
-      } else {
-        this.player1 = 'R';
-        this.player2 = 'B';
-      }
+    if (color === "B") {
+      this.player1 = 'B';
+      this.player2 = 'R';
+    } else {
+      this.player1 = 'R';
+      this.player2 = 'B';
+    }
   }
 
   togglePlayer(chessType: string) {
@@ -158,7 +179,7 @@ export default class App extends Vue {
       this.decidePlayer(chessType);
     }
   }
-    
+  
   showChess(index: number) {
     let copy = [...this.chess];
     copy[index] = { ...copy[index], isOpen: true };
@@ -171,13 +192,6 @@ export default class App extends Vue {
       this.showChess(chessIndex);
     }
   }
-
-  checkSelf = (turn: number, player1: string | null, player2: string | null, type: string): boolean => {
-        const nowColor = turn === 1 ? player1 : player2;
-        const chessType = AppLayout.InvokerClass.getColor(type);
-        return nowColor === chessType;
-  };
+  
 }
-
-
 </script>

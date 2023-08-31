@@ -1,6 +1,6 @@
 export const ROW = 8;
 export const COL = 4;
-export const pieceConstant: Record<string, string> = {
+export const CHESS_LIST: Record<string, string> = {
     R1: '兵',
     R2: '炮',
     R3: '傌',
