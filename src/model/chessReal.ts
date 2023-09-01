@@ -12,12 +12,14 @@ export class PieceNormal extends ChessPiece {
 
       const selectedChess = chess[selfIndex]; // 要移動的棋子
       const targetChess = chess[targetIndex]; // 目標位置的棋子
-
+      
       if(!selectedChess.id) {
-        moveChess(chess, selfIndex, targetIndex, countState);
+        console.log("一般選棋A : " + selectedChess.id)
+        moveChess(chess, selectedChess.index, targetChess.index, countState);
       } else {
+        console.log("一般選棋B : " + selectedChess.id)
           if (checkCanEat(selectedChess.type, targetChess.type)) {
-              chess = moveChess(chess, selfIndex, targetIndex, countState);
+              chess = moveChess(chess, selectedChess.index, targetChess.index, countState);
               eatChess(count, targetChess.type);
           }
       }
@@ -40,9 +42,9 @@ export class PieceBomb extends ChessPiece {
       const targetChess = chess[targetIndex]; 
 
       if (checkCanEat(selectedChess.type, targetChess.type)) {
-        chess= moveChess(chess, selfIndex, targetIndex, countState);
+        chess= moveChess(chess, selectedChess.index, targetChess.index, countState);
             eatChess(count, targetChess.type);
-            console.log("確定攻擊成功")
+            console.log("砲攻擊成功")
       }
     return chess;
   }

@@ -21,12 +21,11 @@
       <ul v-for="(vo, i) in Array.from({ length: chess.length / ROW })" :key="'col' + i" class="border-r line" >
         <ul v-for="(item, j) in Array.from({ length: ROW })" :key="'row' + j" >
           <ChessElement
-             ref="chessElement"
              @pressClick="() => clickChess(chess, i * ROW + j)"
             :isActive="active?.id === chess[i * ROW + j].id"
             :index="i * ROW + j"
             :data="chess[i * ROW + j]"
-            :countData="count"
+            :count="count"
             :countState ="countState"
           />
         </ul>
@@ -66,7 +65,6 @@ export default class App extends Vue {
   normal: ChessPiece = new PieceNormal();
   bomb: ChessPiece = new PieceBomb();
 
-
   classnames = classnames;
 
   created() {
@@ -96,46 +94,48 @@ export default class App extends Vue {
     this.turn = 1;
     this.countState = false;
   }
-
+  
   clickChess(chessItem: ChessItem[], idx: number) {
       this.togglePlayer(chessItem[idx].type);
       
       if (!chessItem[idx].isOpen) {
-        this.displayChess(chessItem[idx].index); 
+        !this.active && this.displayChess(chessItem[idx].index); 
         return;
       }
 
-      const isSelf = checkSelf(this.turn, this.player1, this.player2, chessItem[idx].type); 
+      let isSelf = checkSelf(this.turn, this.player1, this.player2, chessItem[idx].type); 
 
       if (!this.active) {
-        // 檢查是否為己方棋子
+        // 是否為己方棋子
         if (!isSelf) return;
           this.active = { ...chessItem[idx], count: { ...this.count }, countState: this.countState }; 
+          console.log("發亮 " + chessItem[idx].index)
           return;
       }
 
-      // 點擊已選取的格子
+      // 取消已選取的格子
       if (this.active.id === chessItem[idx].id) {
+        console.log("已取消 " + chessItem[idx].index)
         this.active = null;
         return;
       }
 
       // 是否選擇第二個棋子
-      const selfIndex = this.active ? this.active.index : -1;
-      const targetIndex = chessItem[idx].index; 
-      const level = this.active ? this.active.type : '';
       if (this.active.id !== chessItem[idx].id) {
+        console.log("是否選第二顆棋子? " + chessItem[idx].index);
+        console.log("自己嗎?  " + isSelf);
         if (isSelf) return;
+        let selfIndex = this.active? this.active.index : -1;
+        let targetIndex = chessItem[idx].index; 
+        const level = this.active ? this.active.type : '';
         if(level === "R2" || level === 'B2') {
           this.chess = this.bomb.excute(chessItem, selfIndex, targetIndex, this.countState, this.count); 
-          console.log("跳跳"+ selfIndex + targetIndex);
+          console.log("跳跳"+ selfIndex + "," + targetIndex);
         } else {
           this.chess = this.normal.excute(chessItem, selfIndex, targetIndex, this.countState, this.count); 
           console.log("一般走路"+ selfIndex + targetIndex);
         }
-
       } 
-      
 
       if (!canEatOrFlip(this.chess) && !areAllChessOpened(this.chess)) {
           this.countState = true;

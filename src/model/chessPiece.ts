@@ -131,10 +131,12 @@ export const JumpMove = (selfIndex: number, targetIndex: number, panel: ChessIte
       const start = y - y2 > 0 ? y2 : y;
       const end = start === y ? y2 : y;
       
+      
       // 檢查中間是否有障礙物
       for (let i = start + 1; i < end; i++) {
         const target = transIndex(x, i);
         const xPanel = panel[target];
+        console.log("上下有障礙物"+ panel[target])
         if (xPanel) return true;
         else checkXPanel = false
       } 
@@ -154,6 +156,7 @@ export const JumpMove = (selfIndex: number, targetIndex: number, panel: ChessIte
       for (let i = start + 1; i < end; i++) {
         const target = transIndex(i, y);
         const yPanel = panel[target];
+        console.log("左右有障礙物" + panel[target])
         if (yPanel) return true;
         else checkYPanel = false;
       }
@@ -193,7 +196,6 @@ export const moveChess = (chess: ChessItem[], selfIndex: number, targetIndex: nu
 export const eatChess = (count: Record<string, number>, type: string): Record<string, number> => {
     const color = getColor(type);
     const newCount = { ...count };
-    
     if (color === "B") {
       newCount.B++;
       console.log("攻擊B!"+ newCount.B++);

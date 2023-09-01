@@ -18,8 +18,6 @@
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator';
 import { CHESS_LIST } from '../model/chessPieceConstant';
-import { ChessItem } from '../model/chessPiece';
-
 
 @Component
 export default class ChessElement extends Vue {
@@ -38,14 +36,16 @@ export default class ChessElement extends Vue {
     return CHESS_LIST[type] || '';
   }
 
-  handleClick(): void {
-    const sendData: ChessItem = {
-      id: this.data.id,
-      type: this.data.type,
-      isOpen: this.data.isOpen,
-      index: this.index,
-      count: this.count,
-      countState: this.countState,
+  handleClick() {
+    const sendData = {
+      data: {
+        id: this.data.id,
+        type: this.data.type,
+        isOpen: this.data.isOpen,
+        index: this.index,
+        count: this.count,
+        countState: this.countState,
+      },
     };
     this.$emit('pressClick', sendData);
   }
