@@ -19,7 +19,7 @@
 import { Vue, Component, Prop } from 'vue-property-decorator';
 import { CHESS_LIST } from '../model/chessPieceConstant';
 import { ChessItem } from '../model/chessPiece';
-import { getColor, checkStep, checkJumpStep, checkCanEat } from "../model/chessPiece";
+
 
 @Component
 export default class ChessElement extends Vue {
@@ -50,53 +50,5 @@ export default class ChessElement extends Vue {
     this.$emit('pressClick', sendData);
   }
 
-  public getChessMovement(chess:ChessItem[], selfIndex:number, targetIndex:number, countState:boolean): void{
-    const isCanMove = checkStep(selfIndex, targetIndex);
-      if(!isCanMove) return;
-
-      const selectedChess = chess[selfIndex]; // 取得要移動的棋子
-      const targetChess = chess[targetIndex]; // 取得目標位置的棋子
-      let count: Record<string, number> = { ...this.count }; // 初始化 count 變數
-      if(!selectedChess.id) {
-        moveChess(chess, selfIndex, targetIndex, this.countState);
-      } else {
-          if (checkCanEat(selectedChess.type, targetChess.type)) {
-              moveChess(chess, selfIndex, targetIndex, this.countState);
-              eatChess(count, targetChess.type);
-          }
-      }
-  }
-
-  public bombChessMovement(chess:ChessItem[], selfIndex:number, targetIndex:number, countState:boolean): void{
-    const isCanMove = checkJumpStep(selfIndex, targetIndex, chess);
-      if(!isCanMove) return;
-
-      const selectedChess = chess[selfIndex]; 
-      const targetChess = chess[targetIndex]; 
-      let count: Record<string, number> = { ...this.count };
-      if (checkCanEat(selectedChess.type, targetChess.type)) {
-            moveChess(chess, selfIndex, targetIndex, this.countState);
-            eatChess(count, targetChess.type);
-      }
-  }
 }
-
-export const eatChess = (count: Record<string, number>, type: string): Record<string, number> => {
-    const color = getColor(type);
-    const newCount = { ...count };
-    if (color === "B") {
-      newCount.B++;
-    }
-    if (color === "R") {
-      newCount.R++;
-    }
-    return newCount;
-  };
-
-export const moveChess = (chess: ChessItem[], selfIndex: number, targetIndex: number, countState: boolean): ChessItem[] => {
-  const temp = [...chess];
-  temp[targetIndex] = temp[selfIndex];
-  temp[selfIndex] = { id: "", type: "", isOpen: true, index: selfIndex, count: {}, countState: countState };
-  return temp;
-};
 </script>

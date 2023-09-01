@@ -2,7 +2,6 @@ import { CHESS_LIST } from './chessPieceConstant';
 import { v4 as uuidv4 } from 'uuid';
 import { ROW, COL } from './chessPieceConstant';
 import { normal, transXY, transIndex } from './chessCoordinate';
-import ChessElement from '../components/DarkChess.vue';
 
 export interface ChessItem {
     id: string;
@@ -13,20 +12,27 @@ export interface ChessItem {
     countState: boolean;
 }
 
-export class ChessPiece {
-    protected receiver: ChessElement;
-    public turn = 1;
+export interface MoveComman {
+    getChessMovement(chess: ChessItem[], selfIndex: number, targetIndex: number, countState: boolean, count: Record<string, number>): ChessItem[];
+ }
+
+export class ChessPiece implements MoveComman {
+    public turn;
   
-    constructor(receiver: ChessElement) {
-      this.receiver = new ChessElement();
+    constructor(){
+        this.turn = 1;
     }
-  
-    excute(chess:ChessItem[], selfIndex:number, targetIndex:number, countState:boolean): void {
-        this.receiver.getChessMovement(chess, selfIndex, targetIndex, countState);
+   
+    excute(chess:ChessItem[], selfIndex:number, targetIndex:number, countState:boolean, count: Record<string, number>): ChessItem[] {
+        return this.getChessMovement(chess, selfIndex, targetIndex, countState, count);
+    }
+
+    getChessMovement(chess: ChessItem[], selfIndex: number, targetIndex: number, countState: boolean, count: Record<string, number>): ChessItem[] {
+        return [];
     }
 }
 
-// App.vue使用到的方法
+
 export const getColor = (chess: string): string => {
         return chess.substring(0, 1);
 }
@@ -48,7 +54,6 @@ export const createReapeat = (count: number, item: ChessItem, index:number): Che
     for (let i = 0; i < count; i++) {
         temp.push({ ...item, id: uuidv4(), index: index, count: { B: 0, R: 0 }, countState: false });
     }
-    console.log('重複印出棋子 : ', temp);
     return temp;
 }
 
@@ -83,10 +88,11 @@ export const randomChess = (chess: ChessItem[]): ChessItem[] => {
     for (let i = 0; i < chess.length; i++) {
       const target = random(0, chess.length - 1);
       [chess[i], chess[target]] = [chess[target], chess[i]];
-      console.log("亂數排列"+chess[i])
+      
       chess[i].index = i
-      chess[target].index = chess[target];
+      chess[target].index = target
     }
+    
     return chess;
 }
   
@@ -96,16 +102,6 @@ export const combineChess = (): ChessItem[] => {
     return finial;
 }
 
-export const checkCanMove = (isBomb: boolean, selfIndex: number, targetIndex: number, chess:ChessItem[]) : boolean => {
-
-    if (isBomb) {
-      return checkJumpStep(selfIndex, targetIndex, chess);
-    } else {
-      return checkStep(selfIndex, targetIndex);
-    }
-  
-    return false;
-}
 
 //檢查步伐是否合格
 export const checkStep = (selfIndex: number, targetIndex: number): boolean => {
@@ -122,7 +118,7 @@ export const checkStep = (selfIndex: number, targetIndex: number): boolean => {
     return temp.includes(targetIndex);
 }
 
-export const checkJumpStep = (selfIndex: number, targetIndex: number, panel: ChessItem[]): boolean => {
+export const JumpMove = (selfIndex: number, targetIndex: number, panel: ChessItem[]): boolean => {
     const [x, y] = transXY(selfIndex);
     const [x2, y2] = transXY(targetIndex);
     let checkXPanel = true;
@@ -186,6 +182,28 @@ export const checkCanEat = (self: string, target: string): boolean => {
     if (selfLevel === 1 && targetLevel === 7) return true; //兵吃將
     return selfLevel > targetLevel;
 }
+
+export const moveChess = (chess: ChessItem[], selfIndex: number, targetIndex: number, countState: boolean): ChessItem[] => {
+    const temp = [...chess];
+    temp[targetIndex] = temp[selfIndex];
+    temp[selfIndex] = { id: "", type: "", isOpen: true, index: selfIndex, count: {}, countState: countState };
+    return temp;
+  };
+
+export const eatChess = (count: Record<string, number>, type: string): Record<string, number> => {
+    const color = getColor(type);
+    const newCount = { ...count };
+    
+    if (color === "B") {
+      newCount.B++;
+      console.log("攻擊B!"+ newCount.B++);
+    }
+    if (color === "R") {
+      newCount.R++;
+      console.log("攻擊R!"+ newCount.R++);
+    }
+    return newCount;
+  };
 
 export function canEatOrFlip(chess: ChessItem[]): boolean {
     for (const chessItem of chess) {

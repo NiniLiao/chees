@@ -22,7 +22,7 @@
         <ul v-for="(item, j) in Array.from({ length: ROW })" :key="'row' + j" >
           <ChessElement
              ref="chessElement"
-             @pressClick="() => clickChess(chess)"
+             @pressClick="() => clickChess(chess, i * ROW + j)"
             :isActive="active?.id === chess[i * ROW + j].id"
             :index="i * ROW + j"
             :data="chess[i * ROW + j]"
@@ -37,9 +37,9 @@
 
 <script lang="ts">
 import { Vue, Component, Watch } from 'vue-property-decorator';
-import { ChessItem, getColor, combineChess, checkSelf, canEatOrFlip, areAllChessOpened } from './model/chessPiece';
+import { ChessPiece, ChessItem, getColor, combineChess, checkSelf, canEatOrFlip, areAllChessOpened } from './model/chessPiece';
 import { ROW, COL } from './model/chessPieceConstant';
-import { R1 } from './model/chessR1';
+import { PieceNormal, PieceBomb } from './model/chessReal';
 import ChessElement from './components/DarkChess.vue';
 import './App.css';
 import classnames from 'classnames';
@@ -63,14 +63,14 @@ export default class App extends Vue {
   stepCount = 0; 
   countState = false;
 
-  R1: R1;
+  normal: ChessPiece = new PieceNormal();
+  bomb: ChessPiece = new PieceBomb();
+
 
   classnames = classnames;
 
   created() {
     this.init();
-    this.R1 = new R1(this.$refs.chessElement as ChessElement);
-    console.log('R1的實例化 : ' + this.R1)
   }
 
   @Watch('chess')
@@ -97,47 +97,45 @@ export default class App extends Vue {
     this.countState = false;
   }
 
-  clickChess(chessItem: ChessItem[]) {
-    for (let i = 0; i < chessItem.length; i++){
-      const selfIndex = this.active ? this.active.index : -1;
-      const targetIndex = chessItem[i].index; 
-      console.log("看一下目標座標 : ", targetIndex);
-      const level = this.active ? this.active.type : '';
-
-      this.togglePlayer(chessItem[i].type);
+  clickChess(chessItem: ChessItem[], idx: number) {
+      this.togglePlayer(chessItem[idx].type);
       
-      if (!chessItem[i].isOpen) {
-        this.displayChess(chessItem[i].index); 
+      if (!chessItem[idx].isOpen) {
+        this.displayChess(chessItem[idx].index); 
         return;
       }
 
-      const isSelf = checkSelf(this.turn, this.player1, this.player2, chessItem[i].type); 
+      const isSelf = checkSelf(this.turn, this.player1, this.player2, chessItem[idx].type); 
 
       if (!this.active) {
         // 檢查是否為己方棋子
         if (!isSelf) return;
-          this.active = { ...chessItem[i], count: { ...this.count }, countState: this.countState }; 
+          this.active = { ...chessItem[idx], count: { ...this.count }, countState: this.countState }; 
           return;
       }
 
       // 點擊已選取的格子
-      if (this.active.id === chessItem[i].id) {
+      if (this.active.id === chessItem[idx].id) {
         this.active = null;
         return;
       }
 
       // 是否選擇第二個棋子
-      if (this.active.id !== chessItem[i].id) {
+      const selfIndex = this.active ? this.active.index : -1;
+      const targetIndex = chessItem[idx].index; 
+      const level = this.active ? this.active.type : '';
+      if (this.active.id !== chessItem[idx].id) {
         if (isSelf) return;
+        if(level === "R2" || level === 'B2') {
+          this.chess = this.bomb.excute(chessItem, selfIndex, targetIndex, this.countState, this.count); 
+          console.log("跳跳"+ selfIndex + targetIndex);
+        } else {
+          this.chess = this.normal.excute(chessItem, selfIndex, targetIndex, this.countState, this.count); 
+          console.log("一般走路"+ selfIndex + targetIndex);
+        }
 
-        switch (level) {
-          case "R1": {
-            console.log('this' + this)
-            this.R1.excute(chessItem, selfIndex, targetIndex, this.countState); 
-            break;
-          }
-        }	
       } 
+      
 
       if (!canEatOrFlip(this.chess) && !areAllChessOpened(this.chess)) {
           this.countState = true;
@@ -148,7 +146,7 @@ export default class App extends Vue {
           alert("和局囉");
           this.init();
       }
-    }
+    
     this.turn *= -1; 
     this.active = null;  
   }
