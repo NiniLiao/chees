@@ -9,11 +9,15 @@ export interface ChessItem {
     isOpen: boolean;
     index: number;
     count: Record<string, number>;
-    countState: boolean;
+}
+
+export interface Panel {
+    count: Record<string, number>;
+    chess: ChessItem[];
 }
 
 export interface MoveComman {
-    getChessMovement(chess: ChessItem[], selfIndex: number, targetIndex: number, countState: boolean, count: Record<string, number>): ChessItem[];
+    getChessMovement(chess: ChessItem[], selfIndex: number, targetIndex: number, count: Record<string, number>): Panel ;
  }
 
 export class ChessPiece implements MoveComman {
@@ -23,12 +27,12 @@ export class ChessPiece implements MoveComman {
         this.turn = 1;
     }
    
-    excute(chess:ChessItem[], selfIndex:number, targetIndex:number, countState:boolean, count: Record<string, number>): ChessItem[] {
-        return this.getChessMovement(chess, selfIndex, targetIndex, countState, count);
+    excute(chess:ChessItem[], selfIndex:number, targetIndex:number, count: Record<string, number>): Panel {
+        return this.getChessMovement(chess, selfIndex, targetIndex, count);
     }
 
-    getChessMovement(chess: ChessItem[], selfIndex: number, targetIndex: number, countState: boolean, count: Record<string, number>): ChessItem[] {
-        return [];
+    getChessMovement(chess: ChessItem[], selfIndex: number, targetIndex: number, count: Record<string, number>): Panel {
+        return {chess, count};
     }
 }
 
@@ -43,7 +47,7 @@ export const getLevel = (chess: string): number => {
  
 export const basicSetting = (): ChessItem[] => {
     const arr: ChessItem[] = Object.keys(CHESS_LIST).map((vo, index) => {
-      return { id: uuidv4(), type: vo, isOpen: false, index, count: { B: 0, R: 0 }, countState: false };
+      return { id: uuidv4(), type: vo, isOpen: false, index, count: { B: 0, R: 0 } };
     });
     
     return arr;
@@ -52,7 +56,7 @@ export const basicSetting = (): ChessItem[] => {
 export const createReapeat = (count: number, item: ChessItem, index:number): ChessItem[] => {
     const temp: ChessItem[] = [];
     for (let i = 0; i < count; i++) {
-        temp.push({ ...item, id: uuidv4(), index: index, count: { B: 0, R: 0 }, countState: false });
+        temp.push({ ...item, id: uuidv4(), index: index, count: { B: 0, R: 0 } });
     }
     return temp;
 }
@@ -136,7 +140,6 @@ export const JumpMove = (selfIndex: number, targetIndex: number, panel: ChessIte
       for (let i = start + 1; i < end; i++) {
         const target = transIndex(x, i);
         const xPanel = panel[target];
-        console.log("上下有障礙物"+ panel[target])
         if (xPanel) return true;
         else checkXPanel = false
       } 
@@ -156,7 +159,6 @@ export const JumpMove = (selfIndex: number, targetIndex: number, panel: ChessIte
       for (let i = start + 1; i < end; i++) {
         const target = transIndex(i, y);
         const yPanel = panel[target];
-        console.log("左右有障礙物" + panel[target])
         if (yPanel) return true;
         else checkYPanel = false;
       }
@@ -177,6 +179,7 @@ export const checkCanEat = (self: string, target: string): boolean => {
     const targetLevel = getLevel(target);
     const selfColor = getColor(self);
     const targetColor = getColor(target);
+    if(target === "") return false;
     if (selfLevel === 2) {
       return true; 
     } else if (selfColor !== targetColor && selfLevel === targetLevel) {
@@ -186,10 +189,11 @@ export const checkCanEat = (self: string, target: string): boolean => {
     return selfLevel > targetLevel;
 }
 
-export const moveChess = (chess: ChessItem[], selfIndex: number, targetIndex: number, countState: boolean): ChessItem[] => {
+export const moveChess = (chess: ChessItem[], selfIndex: number, targetIndex: number): ChessItem[] => {
     const temp = [...chess];
     temp[targetIndex] = temp[selfIndex];
-    temp[selfIndex] = { id: "", type: "", isOpen: true, index: selfIndex, count: {}, countState: countState };
+    temp[targetIndex].index = targetIndex;
+    temp[selfIndex] = { id: "", type: "", isOpen: true, index: selfIndex, count: {} };
     return temp;
   };
 
@@ -198,44 +202,12 @@ export const eatChess = (count: Record<string, number>, type: string): Record<st
     const newCount = { ...count };
     if (color === "B") {
       newCount.B++;
-      console.log("攻擊B!"+ newCount.B++);
     }
     if (color === "R") {
       newCount.R++;
-      console.log("攻擊R!"+ newCount.R++);
     }
     return newCount;
   };
 
-export function canEatOrFlip(chess: ChessItem[]): boolean {
-    for (const chessItem of chess) {
-      if (!chessItem.isOpen || checkCanEatOrFlip(chessItem, chess)) {
-        return true;
-      }
-    }
-    return false;
-}
-  
-export function checkCanEatOrFlip(chessItem: ChessItem, chess: ChessItem[]): boolean {
-    if (!chessItem.isOpen) {
-      return true; 
-    }
-  
-    for (const otherChessItem of chess) {
-      if (otherChessItem.id && otherChessItem.isOpen && checkCanEat(chessItem.type, otherChessItem.type)) {
-        return true; 
-      }
-    }
-  
-    return false;
-}
-  
-export function areAllChessOpened(chess: ChessItem[]): boolean {
-    for (const chessItem of chess) {
-      if (!chessItem.isOpen) {
-        return false;
-      }
-    }
-    return true;
-}
+
   

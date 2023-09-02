@@ -26,7 +26,6 @@
             :index="i * ROW + j"
             :data="chess[i * ROW + j]"
             :count="count"
-            :countState ="countState"
           />
         </ul>
       </ul>
@@ -36,7 +35,7 @@
 
 <script lang="ts">
 import { Vue, Component, Watch } from 'vue-property-decorator';
-import { ChessPiece, ChessItem, getColor, combineChess, checkSelf, canEatOrFlip, areAllChessOpened } from './model/chessPiece';
+import { Panel, ChessPiece, ChessItem, getColor, combineChess, checkSelf } from './model/chessPiece';
 import { ROW, COL } from './model/chessPieceConstant';
 import { PieceNormal, PieceBomb } from './model/chessReal';
 import ChessElement from './components/DarkChess.vue';
@@ -49,7 +48,7 @@ import classnames from 'classnames';
   },
 })
 export default class App extends Vue {
-  count = { B: 0, R: 0 } as Record<string, number>;
+  count = { B: 0, R: 0, stepCount: 0 } as Record<string, number>;
   active: ChessItem | null = null;
   turn = 1;
   player1: string | null = null;
@@ -60,7 +59,6 @@ export default class App extends Vue {
   COL: number = COL;
 
   stepCount = 0; 
-  countState = false;
 
   normal: ChessPiece = new PieceNormal();
   bomb: ChessPiece = new PieceBomb();
@@ -90,9 +88,8 @@ export default class App extends Vue {
   
   init() {
     this.chess = combineChess() as ChessItem[];
-    this.count = { B: 0, R: 0 };
+    this.count = { B: 0, R: 0, stepCount: 0 };
     this.turn = 1;
-    this.countState = false;
   }
   
   clickChess(chessItem: ChessItem[], idx: number) {
@@ -100,6 +97,7 @@ export default class App extends Vue {
       
       if (!chessItem[idx].isOpen) {
         !this.active && this.displayChess(chessItem[idx].index); 
+        this.count.stepCount = 0;
         return;
       }
 
@@ -108,41 +106,34 @@ export default class App extends Vue {
       if (!this.active) {
         // 是否為己方棋子
         if (!isSelf) return;
-          this.active = { ...chessItem[idx], count: { ...this.count }, countState: this.countState }; 
-          console.log("發亮 " + chessItem[idx].index)
+          this.active = { ...chessItem[idx], count: { ...this.count } }; 
           return;
       }
 
       // 取消已選取的格子
       if (this.active.id === chessItem[idx].id) {
-        console.log("已取消 " + chessItem[idx].index)
         this.active = null;
         return;
       }
 
       // 是否選擇第二個棋子
       if (this.active.id !== chessItem[idx].id) {
-        console.log("是否選第二顆棋子? " + chessItem[idx].index);
-        console.log("自己嗎?  " + isSelf);
         if (isSelf) return;
         let selfIndex = this.active? this.active.index : -1;
         let targetIndex = chessItem[idx].index; 
         const level = this.active ? this.active.type : '';
         if(level === "R2" || level === 'B2') {
-          this.chess = this.bomb.excute(chessItem, selfIndex, targetIndex, this.countState, this.count); 
-          console.log("跳跳"+ selfIndex + "," + targetIndex);
+          let panel:Panel = this.bomb.excute(chessItem, selfIndex, targetIndex, this.count); 
+          this.chess = panel.chess;
+          this.count = panel.count;
         } else {
-          this.chess = this.normal.excute(chessItem, selfIndex, targetIndex, this.countState, this.count); 
-          console.log("一般走路"+ selfIndex + targetIndex);
+          let panel:Panel= this.normal.excute(chessItem, selfIndex, targetIndex, this.count); 
+          this.chess = panel.chess;
+          this.count = panel.count;
         }
       } 
 
-      if (!canEatOrFlip(this.chess) && !areAllChessOpened(this.chess)) {
-          this.countState = true;
-          this.stepCount++;
-      }
-      
-      if (this.stepCount >= 50 && !canEatOrFlip(this.chess)) {
+      if (this.count.stepCount >= 50) {
           alert("和局囉");
           this.init();
       }

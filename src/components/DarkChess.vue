@@ -26,7 +26,6 @@ export default class ChessElement extends Vue {
   @Prop(Function) clickChess!: (data: { id: string; type: string; isOpen: boolean }) => void;
   @Prop(Boolean) isActive!: boolean;
   @Prop({ type: Object as () => Record<string, number>, required: true }) count!: Record<string, number>;
-  @Prop(Boolean) countState!: boolean;
 
   get isRed(): boolean {
     return this.data.type.substring(0, 1) === 'R';
@@ -44,7 +43,6 @@ export default class ChessElement extends Vue {
         isOpen: this.data.isOpen,
         index: this.index,
         count: this.count,
-        countState: this.countState,
       },
     };
     this.$emit('pressClick', sendData);
