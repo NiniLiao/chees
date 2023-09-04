@@ -58,8 +58,6 @@ export default class App extends Vue {
   ROW: number = ROW;
   COL: number = COL;
 
-  stepCount = 0; 
-
   normal: ChessPiece = new PieceNormal();
   bomb: ChessPiece = new PieceBomb();
 

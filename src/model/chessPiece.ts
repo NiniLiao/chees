@@ -141,7 +141,7 @@ export const JumpMove = (selfIndex: number, targetIndex: number, panel: ChessIte
         const target = transIndex(x, i);
         const xPanel = panel[target];
         if (xPanel) return true;
-        else checkXPanel = false
+        else checkXPanel = false;
       } 
   
       const near = transIndex(x, y2);
@@ -168,7 +168,6 @@ export const JumpMove = (selfIndex: number, targetIndex: number, panel: ChessIte
       if (zPanel && zPanel.type == '') {
         return true;
       }
-  
     }
   
     return false;
